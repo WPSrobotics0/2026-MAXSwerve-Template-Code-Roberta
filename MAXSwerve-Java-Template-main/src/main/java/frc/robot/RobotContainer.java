@@ -52,10 +52,10 @@ public class RobotContainer {
         // Turning is controlled by the X axis of the right stick.
         new RunCommand(
             () -> m_robotDrive.drive(
-                -MathUtil.applyDeadband(m_driverController.getLeftY(), OIConstants.kDriveDeadband),
-                -MathUtil.applyDeadband(m_driverController.getLeftX(), OIConstants.kDriveDeadband),
-                -MathUtil.applyDeadband(m_driverController.getRightX(), OIConstants.kDriveDeadband),
-                true),
+                -MathUtil.applyDeadband(m_driverController.getLeftY(), OIConstants.kDriveDeadband)*m_speedMultiplier,
+                -MathUtil.applyDeadband(m_driverController.getLeftX(), OIConstants.kDriveDeadband)*m_speedMultiplier,
+                -MathUtil.applyDeadband(m_driverController.getRightX(), OIConstants.kDriveDeadband)*m_speedMultiplier,
+                fieldRelative),
             m_robotDrive));
   }
 
@@ -68,6 +68,7 @@ public class RobotContainer {
    * passing it to a
    * {@link JoystickButton}.
    */
+  boolean fieldRelative = true;
   private void configureButtonBindings() {
     new JoystickButton(m_driverController, Button.kR1.value)
         .whileTrue(new RunCommand(
@@ -78,8 +79,14 @@ public class RobotContainer {
         .onTrue(new InstantCommand(
             () -> m_robotDrive.zeroHeading(),
             m_robotDrive));
+
+    new JoystickButton(m_driverController, XboxController.Button.kY.value).onTrue(new InstantCommand(() -> fieldRelative = false));
+    new JoystickButton(m_driverController, XboxController.Button.kX.value).onTrue(new InstantCommand(() -> fieldRelative = true));
+    new JoystickButton(m_driverController, XboxController.Button.kLeftBumper.value).whileTrue(new InstantCommand(() -> m_speedMultiplier = 0.5));
+    new JoystickButton(m_driverController,XboxController.Button.kLeftBumper.value).whileFalse(new InstantCommand(() -> m_speedMultiplier = 1.0));
   }
 
+  private double m_speedMultiplier = 1.0;
   /**
    * Use this to pass the autonomous command to the main {@link Robot} class.
    *

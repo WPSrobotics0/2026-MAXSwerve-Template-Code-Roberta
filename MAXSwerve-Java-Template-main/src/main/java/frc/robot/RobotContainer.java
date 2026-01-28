@@ -19,7 +19,7 @@ import frc.robot.Constants.AutoConstants;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.OIConstants;
 import frc.robot.subsystems.DriveSubsystem;
-import frc.robot.subsystems.cameraSubsystem;
+//import frc.robot.subsystems.cameraSubsystem;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
@@ -36,7 +36,7 @@ import java.util.List;
 public class RobotContainer {
   // The robot's subsystems
   private final DriveSubsystem m_robotDrive = new DriveSubsystem();
-  private final cameraSubsystem m_CameraSubsystem = new cameraSubsystem(m_robotDrive);
+  //private final cameraSubsystem m_CameraSubsystem = new cameraSubsystem(m_robotDrive);
   // The driver's controller
   XboxController m_driverController = new XboxController(OIConstants.kDriverControllerPort);
 
@@ -72,11 +72,11 @@ public class RobotContainer {
   boolean fieldRelative = true;
   private void configureButtonBindings() {
     
-    new JoystickButton(m_driverController, Button.kR1.value)
+    /*new JoystickButton(m_driverController, XboxController.Button.kA.value)
         .whileTrue(new RunCommand(
-            () -> m_robotDrive.drive(m_CameraSubsystem.driveTo(),0,m_CameraSubsystem.setAngle(1),true),
+            () -> m_robotDrive.drive(m_CameraSubsystem.driveTo(),0,m_CameraSubsystem.setAngle(1),false),
             m_robotDrive));
-
+    */
     new JoystickButton(m_driverController, XboxController.Button.kStart.value)
         .onTrue(new InstantCommand(
             () -> m_robotDrive.zeroHeading(),

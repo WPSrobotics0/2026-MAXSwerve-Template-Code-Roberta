@@ -11,16 +11,18 @@ import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.DriveSubsystem;
 import frc.robot.subsystems.LimelightHelpers;
-
+import edu.wpi.first.math.controller.PIDController;
 /* You should consider using the more terse Command factories API instead https://docs.wpilib.org/en/stable/docs/software/commandbased/organizing-command-based.html#defining-commands */
 public class alignDistanceWithTagCommand extends Command {
   /** Creates a new AlignWithIntakeCommand. */
 
   private DriveSubsystem m_driveSubsystem;
-  private final AprilTagPID m_AprilTagPID;
   private double m_targetZ; 
   private double m_targetX;
   private double m_targetRotation;
+  private double m_Z;
+  private double m_X;
+  private double m_Rotation;
 
   private boolean m_tidFound = false;
 
@@ -28,15 +30,15 @@ public class alignDistanceWithTagCommand extends Command {
   private final BooleanPublisher m_alignmentCompletePub;
   private final DoublePublisher m_targetAnglePub;
   private final DoublePublisher m_tidPub;
+  private NetworkTable m_table;
 
    //constants for progress calculation
    private static final double MAX_ROTATION_ERROR = 10.0; //degrees
    private static final double MAX_POSITION_ERROR = 1.0; //units
 
-  public alignDistanceWithTagCommand(DriveSubsystem driveSubsystem, AprilTagPID aprilTagPID) {
+  public alignDistanceWithTagCommand(DriveSubsystem driveSubsystem) {
     // Use addRequirements() here to declare subsystem dependencies.
     m_driveSubsystem = driveSubsystem;
-    m_AprilTagPID = aprilTagPID;
 
     addRequirements(m_driveSubsystem);
 
@@ -63,9 +65,12 @@ public class alignDistanceWithTagCommand extends Command {
   // Called when the command is initially scheduled.
   @Override
   public void initialize() {
+    m_table=NetworkTableInstance.getDefault().getTable("limelight");
+    var tid = LimelightHelpers.getFiducialID("limelight");
 
-    var tid = AprilTagHelper.tidFromLimelight();
-    m_targetRotation = AprilTagHelper.intakeAngleFromTid(tid);
+    //change later to actual angle (tweak it)
+    m_targetRotation = 45;
+
     m_tidFound = m_targetRotation >= 0;
     if (m_tidFound == false)
     {

@@ -23,6 +23,18 @@ public class alignDistanceWithTagCommand extends Command {
   private double m_Z;
   private double m_X;
   private double m_Rotation;
+  private double kSpeedKp = 0.75;
+  private double kRotationKp = 0.035;
+  private double kSpeedKi = 0;
+  private double kRotationKi = 0;
+  private double kSpeedKd = 0;
+  private double kRotationKd = 0;
+  private double m_driveZTarget;
+  private double m_driveXTarget;
+  private double m_driveRotTarget;
+  PIDController m_rotationController = new PIDController(kRotationKp, kRotationKi, kRotationKd);
+  PIDController m_xSpeedController = new PIDController(kSpeedKp, kSpeedKi, kSpeedKd);
+  PIDController m_zSpeedController = new PIDController(kSpeedKp, kSpeedKi, kSpeedKd);
 
   private boolean m_tidFound = false;
 
@@ -76,14 +88,21 @@ public class alignDistanceWithTagCommand extends Command {
     {
       return;
     }
-
-    m_targetZ = AprilTagHelper.intakeTargetZFromTid(tid);
-    m_targetX = AprilTagHelper.intakeTargetXFromTid(tid);
+    //tweak on a per id basis, just a generic value for april tag
+    m_targetZ =3.5;
+    m_targetX =3.5;
 
     m_targetAnglePub.set(m_targetRotation);
     m_tidPub.set(tid);
 
-    m_AprilTagPID.setTargetPosition(m_targetX, m_targetZ, m_targetRotation);
+    //m_AprilTagPID.setTargetPosition(m_targetX, m_targetZ, m_targetRotation);
+    m_xSpeedController.setSetpoint(m_targetX);
+    m_zSpeedController.setSetpoint(m_targetZ);
+    m_rotationController.setSetpoint(m_targetRotation);
+    m_X=m_targetX;
+    m_Z=m_targetZ;
+    m_Rotation=m_targetRotation;
+
 
     //reset dashboard values
     m_alignmentProgressPub.set(0);
@@ -95,8 +114,41 @@ public class alignDistanceWithTagCommand extends Command {
   public void execute() {
         double[] robotSpace = LimelightHelpers.getTargetPose_RobotSpace("limelight");
     if (robotSpace != null && robotSpace.length >= 3) {
-      m_AprilTagPID.driveToTarget();
+      //m_AprilTagPID.driveToTarget();
       
+      
+  
+      
+
+      //zSpeed
+      m_Z=robotSpace[2];
+      double maxDriveSpeed=4.8;
+      m_driveZTarget=m_zSpeedController.calculate(m_Z)* maxDriveSpeed;
+
+      //xSpeed
+      m_X=robotSpace[0];
+      m_driveXTarget=m_xSpeedController.calculate(m_X)* maxDriveSpeed;
+
+      //rotSpeed
+      m_Rotation=m_driveSubsystem.getAngle().getDegrees() % 360;
+      if (m_Rotation < m_targetRotation)
+        {
+            if (Math.abs(m_Rotation - m_targetRotation) > 90)
+                m_Rotation += 360;
+        }
+        else if (m_Rotation > m_targetRotation)
+        {
+            if (Math.abs(m_Rotation - m_targetRotation) > 90)
+                m_Rotation -= 360;
+        }
+      //double remapAngle=m_Rotation % 360;
+      //if (remapAngle< m_targetRotation)
+
+      m_driveRotTarget=m_rotationController.calculate(m_Rotation)*Math.PI;
+
+
+
+      m_driveSubsystem.drive(-1* m_driveZTarget, -1*m_driveXTarget, m_driveRotTarget, false);
       // Calculate alignment progress and update dashboard
       // updateDashboard();
 
@@ -106,14 +158,14 @@ public class alignDistanceWithTagCommand extends Command {
     }
   }
 
-  private void updateDashboard() {
+  /*private void updateDashboard() {
     boolean isComplete = m_AprilTagPID.atTargetPosition();
     m_alignmentCompletePub.set(isComplete);
     
     // Get the current errors
-    double deltaX = m_AprilTagPID.getDeltaX();
-    double deltaZ = m_AprilTagPID.getDeltaZ();
-    double deltaRotation = m_AprilTagPID.getDeltaRotation();
+    double deltaX =Math.abs(m_targetX-m_X);
+    double deltaZ =Math.abs(m_targetZ-m_Z);
+    double deltaRotation = Math.abs(m_driveSubsystem.getAngle().getDegrees()-);
     
     // Ensure the PID controller has valid AprilTag data
     double[] robotSpace = LimelightHelpers.getTargetPose_RobotSpace("limelight");
@@ -146,7 +198,7 @@ public class alignDistanceWithTagCommand extends Command {
     }
     
     m_alignmentProgressPub.set(progressPercentage);
-  }
+  }*/
 
 
   // Called once the command ends or is interrupted.
@@ -159,6 +211,6 @@ public class alignDistanceWithTagCommand extends Command {
   // Returns true when the command should end.
   @Override
   public boolean isFinished() {
-    return m_tidFound == false || m_AprilTagPID.atTargetPosition();
+    return m_tidFound == false || (Math.abs(m_driveRotTarget-m_Rotation) < 3.0 && Math.abs(m_targetX-m_X) < 0.05 && Math.abs(m_targetZ-m_Z) < 0.05);
   }
 }

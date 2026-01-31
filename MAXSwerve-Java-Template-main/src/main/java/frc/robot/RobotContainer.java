@@ -14,10 +14,12 @@ import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.math.trajectory.TrajectoryConfig;
 import edu.wpi.first.math.trajectory.TrajectoryGenerator;
 import edu.wpi.first.wpilibj.XboxController;
-import edu.wpi.first.wpilibj.PS4Controller.Button;
+//import edu.wpi.first.wpilibj.PS4Controller.Button;
+
 import frc.robot.Constants.AutoConstants;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.OIConstants;
+import frc.robot.commands.alignDistanceWithTagCommand;
 import frc.robot.subsystems.DriveSubsystem;
 //import frc.robot.subsystems.cameraSubsystem;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -86,6 +88,7 @@ public class RobotContainer {
     new JoystickButton(m_driverController, XboxController.Button.kX.value).onTrue(new InstantCommand(() -> fieldRelative = true));
     new JoystickButton(m_driverController, XboxController.Button.kLeftBumper.value).whileTrue(new InstantCommand(() -> m_speedMultiplier = 0.5));
     new JoystickButton(m_driverController,XboxController.Button.kLeftBumper.value).whileFalse(new InstantCommand(() -> m_speedMultiplier = 1.0));
+    new JoystickButton(m_driverController,XboxController.Button.kA.value).onTrue(new alignDistanceWithTagCommand(m_robotDrive));
   }
 
   private double m_speedMultiplier = 1.0;

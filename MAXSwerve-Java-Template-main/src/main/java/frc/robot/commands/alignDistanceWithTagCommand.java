@@ -45,8 +45,8 @@ public class alignDistanceWithTagCommand extends Command {
   private NetworkTable m_table;
 
    //constants for progress calculation
-   private static final double MAX_ROTATION_ERROR = 10.0; //degrees
-   private static final double MAX_POSITION_ERROR = 1.0; //units
+  // private static final double MAX_ROTATION_ERROR = 10.0; //degrees
+  // private static final double MAX_POSITION_ERROR = 1.0; //units
 
   public alignDistanceWithTagCommand(DriveSubsystem driveSubsystem) {
     // Use addRequirements() here to declare subsystem dependencies.
@@ -55,21 +55,21 @@ public class alignDistanceWithTagCommand extends Command {
     addRequirements(m_driveSubsystem);
 
         NetworkTableInstance inst = NetworkTableInstance.getDefault();
-    NetworkTable table = inst.getTable("ReefAlignment");
+    m_table = inst.getTable("ReefAlignment");
 
-    var progressPub = table.getDoubleTopic("progress");
+    var progressPub = m_table.getDoubleTopic("progress");
     m_alignmentProgressPub = progressPub.publish();
     m_alignmentProgressPub.set(0.0);
 
-    var completePub = table.getBooleanTopic("Complete");
+    var completePub = m_table.getBooleanTopic("Complete");
     m_alignmentCompletePub = completePub.publish();
     m_alignmentCompletePub.set(false);
 
-    var targetAnglePub = table.getDoubleTopic("target Angle");
+    var targetAnglePub = m_table.getDoubleTopic("target Angle");
     m_targetAnglePub = targetAnglePub.publish();
     m_targetAnglePub.set(0.0);
 
-    var tidPub = table.getDoubleTopic("tid");
+    var tidPub = m_table.getDoubleTopic("tid");
     m_tidPub = tidPub.publish();
     m_tidPub.set(0.0);
   }

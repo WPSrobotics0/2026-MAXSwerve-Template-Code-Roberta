@@ -18,7 +18,7 @@ public class cameraSubsystem  extends SubsystemBase{
     // how many degrees back is your limelight rotated from perfectly vertical?
     private double m_limelightMountAngleDegrees = 25.0; 
     // distance from the center of the Limelight lens to the floor
-    private double m_limelightLensHeightInches = 20.0; 
+    private double m_limelightLensHeightInches = 34.0; 
     //private DriveSubsystem m_DriveSubsystem;
     // distance from the target to the floor
     private double m_goalHeightInches = 60.0; 

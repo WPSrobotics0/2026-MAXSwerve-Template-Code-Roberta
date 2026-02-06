@@ -22,7 +22,8 @@ public class alignDistanceWithTagCommand extends Command {
   private double m_targetRotation;
   private double m_tid;
   private double m_Rotation;
-  private double kSpeedKp = 0.75;
+  private double m_Forward;
+  private double kSpeedKp = 0.125;
   private double kRotationKp = 0.125;
   private double kSpeedKi = 0;
   private double kRotationKi = 0;
@@ -30,16 +31,14 @@ public class alignDistanceWithTagCommand extends Command {
   private double kRotationKd = 0;
 
   private double m_driveRotTarget;
+  private double m_driveForwardTarget;
   PIDController m_rotationController = new PIDController(kRotationKp, kRotationKi, kRotationKd);
   PIDController m_xSpeedController = new PIDController(kSpeedKp, kSpeedKi, kSpeedKd);
   PIDController m_zSpeedController = new PIDController(kSpeedKp, kSpeedKi, kSpeedKd);
 
   private boolean m_tidFound = false;
 
-  private final DoublePublisher m_alignmentProgressPub;
-  private final BooleanPublisher m_alignmentCompletePub;
-  private final DoublePublisher m_targetAnglePub;
-  private final DoublePublisher m_tidPub;
+  
   private NetworkTable m_table;
 
   public alignDistanceWithTagCommand(DriveSubsystem driveSubsystem) {
@@ -51,21 +50,11 @@ public class alignDistanceWithTagCommand extends Command {
         NetworkTableInstance inst = NetworkTableInstance.getDefault();
     m_table = inst.getTable("ReefAlignment");
 
-    var progressPub = m_table.getDoubleTopic("progress");
-    m_alignmentProgressPub = progressPub.publish();
-    m_alignmentProgressPub.set(0.0);
+   
 
-    var completePub = m_table.getBooleanTopic("Complete");
-    m_alignmentCompletePub = completePub.publish();
-    m_alignmentCompletePub.set(false);
+    
 
-    var targetAnglePub = m_table.getDoubleTopic("target Angle");
-    m_targetAnglePub = targetAnglePub.publish();
-    m_targetAnglePub.set(0.0);
-
-    var tidPub = m_table.getDoubleTopic("tid");
-    m_tidPub = tidPub.publish();
-    m_tidPub.set(0.0);
+   
   }
 
   // Called when the command is initially scheduled.
@@ -73,7 +62,6 @@ public class alignDistanceWithTagCommand extends Command {
   public void initialize() {
     m_table=NetworkTableInstance.getDefault().getTable("limelight");
     double tid = LimelightHelpers.getFiducialID("limelight");
-    m_tidPub.set(tid);
     m_tid=tid;
     
     //change later to actual angle (tweak it)
@@ -86,19 +74,14 @@ public class alignDistanceWithTagCommand extends Command {
     }
     //tweak on a per id basis, just a generic value for april tag
     m_targetZ =0;
-    m_targetX =0;
 
-    m_targetAnglePub.set(m_targetRotation);
-    m_tidPub.set(tid);
+    
 
-    m_xSpeedController.setSetpoint(m_targetX);
+    m_xSpeedController.setSetpoint(m_targetZ);
     m_zSpeedController.setSetpoint(m_targetZ);
     m_rotationController.setSetpoint(m_targetRotation);
     m_Rotation=LimelightHelpers.getTX("limelight");
 
-    //reset dashboard values
-    m_alignmentProgressPub.set(0);
-    m_alignmentCompletePub.set(false);
   }
 
   private double rotate(){
@@ -107,13 +90,18 @@ public class alignDistanceWithTagCommand extends Command {
 
     return m_rotationController.calculate(m_Rotation)*(Math.PI);
   }
+  private double forward(){
+    double kP=.1;
+    m_Forward=LimelightHelpers.getTY("limelight") *kP;
+
+    return m_xSpeedController.calculate(m_Forward)*(1);
+  }
 
   // Called every time the scheduler runs while the command is scheduled.
   @Override
   public void execute() {
 
     m_tid = LimelightHelpers.getFiducialID("limelight");
-    m_tidPub.set(m_tid);
   
     SmartDashboard.putNumber(" command tid", m_tid);
    
@@ -123,9 +111,21 @@ public class alignDistanceWithTagCommand extends Command {
      
       //rotSpeed
       m_driveRotTarget=rotate();
+     
+
+      //FORWARD SPEED
+      m_driveForwardTarget=forward(); 
 
       SmartDashboard.putBoolean("isValidId", true);
-      m_driveSubsystem.drive( 0, 0, m_driveRotTarget, false);
+      SmartDashboard.putNumber("rotError", Math.abs(m_targetRotation-m_driveRotTarget));
+      SmartDashboard.putNumber("drivespeed", m_driveForwardTarget);
+
+      if(Math.abs(m_targetRotation-m_driveRotTarget )>0.05){
+          m_driveSubsystem.drive( 0, 0, m_driveRotTarget, false);
+      }
+      else{
+          m_driveSubsystem.drive(-1* m_driveForwardTarget, 0, 0, false);
+      }
     
     } else {
       SmartDashboard.putBoolean("isValidId", false);
@@ -137,7 +137,6 @@ public class alignDistanceWithTagCommand extends Command {
   @Override
   public void end(boolean interrupted) {
     m_driveSubsystem.drive(0, 0, 0, true);
-    m_alignmentCompletePub.set(false);
   }
 
   // Returns true when the command should end.

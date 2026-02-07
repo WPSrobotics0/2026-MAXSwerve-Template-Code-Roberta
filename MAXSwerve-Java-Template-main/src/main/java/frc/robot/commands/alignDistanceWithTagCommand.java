@@ -18,7 +18,6 @@ public class alignDistanceWithTagCommand extends Command {
 
   private DriveSubsystem m_driveSubsystem;
   private double m_targetZ; 
-  private double m_targetX;
   private double m_targetRotation;
   private double m_tid;
   private double m_Rotation;
@@ -120,12 +119,13 @@ public class alignDistanceWithTagCommand extends Command {
       SmartDashboard.putNumber("rotError", Math.abs(m_targetRotation-m_driveRotTarget));
       SmartDashboard.putNumber("drivespeed", m_driveForwardTarget);
 
-      if(Math.abs(m_targetRotation-m_driveRotTarget )>0.05){
+      if(Math.abs(m_targetRotation-m_driveRotTarget )>0.1){
           m_driveSubsystem.drive( 0, 0, m_driveRotTarget, false);
       }
-      else{
+      else if(Math.abs(m_targetZ-m_driveForwardTarget)>0.05){
           m_driveSubsystem.drive(-1* m_driveForwardTarget, 0, 0, false);
       }
+      else {m_tidFound=false;}
     
     } else {
       SmartDashboard.putBoolean("isValidId", false);

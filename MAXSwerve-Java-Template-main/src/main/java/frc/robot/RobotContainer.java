@@ -84,7 +84,9 @@ public class RobotContainer {
     new JoystickButton(m_driverController, XboxController.Button.kX.value).onTrue(new InstantCommand(() -> fieldRelative = true));
     new JoystickButton(m_driverController, XboxController.Button.kLeftBumper.value).whileTrue(new InstantCommand(() -> m_speedMultiplier = 0.5));
     new JoystickButton(m_driverController,XboxController.Button.kLeftBumper.value).whileFalse(new InstantCommand(() -> m_speedMultiplier = 1.0));
+    
     new JoystickButton(m_driverController,XboxController.Button.kA.value).onTrue(new alignDistanceWithTagCommand(m_robotDrive));
+    //new JoystickButton(m_driverController, XboxController.Button.kRightBumper.value).onTrue(new InstantCommand(() -> m_robotDrive.setX()));
   }
 
   private double m_speedMultiplier = 1.0;
